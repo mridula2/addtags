@@ -1,0 +1,11 @@
+---
+
+- hosts: all
+  become: true
+  gather_facts: false
+  
+  vars_files:    
+    - group_vars/vars.yml
+
+  roles:
+    - vmware_add_tags
