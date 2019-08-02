@@ -1,0 +1,52 @@
+---
+
+- name: Gather facts about tag categories
+  local_action:
+    module: vmware_category_facts
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+  delegate_to: "{{ host }}"
+  become: yes
+  register: all_tag_category_facts
+
+- set_fact:
+    category_id: "{{ item.category_id }}"
+  loop: "{{ all_tag_category_facts.tag_category_facts|json_query(query) }}"
+  vars:
+    query: "[?category_name==`EPRID`]"
+- debug: var=category_id
+
+- name: Display category id
+  debug:
+    var: all_tag_category_facts
+
+- name: Create a tag
+  local_action:
+    module: vmware_tag
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    tag_name: "{{ tag_name }}"
+    category_id: "{{ category_id }}"
+    tag_description: Sample Description
+    state: present
+  delegate_to: "{{ host }}"
+  become: yes
+
+- name: Add tags to a virtual machine
+  local_action:
+    module: vmware_tag_manager
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    tag_names:
+      - "{{ tag_name }}"
+    object_name: "{{ object_name }}"
+    object_type: "{{ object_type }}"
+    state: add
+  delegate_to: "{{ host }}"
+  become: yes
